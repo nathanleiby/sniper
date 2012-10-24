@@ -183,14 +183,37 @@ function setPlayerLocation(playerId, x, y) {
 
 // Takes two points ([x1,y1], [x2,y2])
 function isAdjacent(pos1, pos2) {
-	// TODO
-	return true;
+	var x1 = pos1[0];
+	var y1 = pos1[1];
+	var x2 = pos2[0];
+	var y2 = pos2[1];
+	
+	// if same location, return false
+	if (x1 == x2 && y1 == y2) {
+		return false;
+	} else if (Math.abs(x1-x2) <= 1 && Math.abs(y1-y2) <= 1) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function isEmpty(pos) {
+	var x = pos[0];
+	var y = pos[1];
+	if (g_map[x][y] === null) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 function isValidMove(pos1, pos2) {
-	var valid = isAdjacent(pos1, pos2);
-	// valid && isEmpty(pos2);
-	return valid;
+	var adj = isAdjacent(pos1, pos2);
+	var empty = isEmpty(pos2);
+	var v = adj && empty;
+	console.log("valid?" + v);
+	return v;
 }
 
 // Handle mouse events
@@ -224,7 +247,6 @@ function getMapCoordsFromMouseClick(e) {
     x -= gCanvas.offsetLeft;
 	y -= gCanvas.offsetTop;
 
-	// var cell = new Cell(Math.floor(y/kPieceWidth), Math.floor(x/kPieceHeight));
 	var cell = [Math.floor(x/TILE_SIZE), Math.floor(y/TILE_SIZE)]
 	console.log(cell);
 	
