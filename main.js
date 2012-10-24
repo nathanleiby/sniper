@@ -24,21 +24,25 @@ var g_map =
 	[null, null, null, null, 'player2']
 ];
 
-
-
-
 /* Start game */
 $(document).ready(function(){
+
+	// Event Listeners
+	// Listen for clicks on move, binoc, aim, and shoot buttons
 	$("a").click(function(){
-		pressButton($(this).attr('id'));
+		OnButtonClick($(this).attr('id'));
 	});
+
+	// Listen for mouse clicks on canvas
+	gCanvas = document.getElementById("game_map");
+	gCanvas.addEventListener("click", OnCanvasClick, false);
 
 	// Sprites	
 	img_player = loadImage("images/player.png");
 	
 	// Must ensure images are loaded before drawing
 	img_player.onload = function() {
-	  drawMap();
+	  loop();
 	}
 });
  
@@ -55,6 +59,7 @@ $(document).ready(function(){
 function loop() {
 	// check whose turn it is
 	// draw canvas and game state (depends on current player)
+	drawMap();
 	// wait for action...
 		// (if 0 actions remainig, only choice is to "end turn")
 		// execute action
@@ -62,13 +67,14 @@ function loop() {
 	// update and save game state (whose turn, actions remaining, etc)
 }
 
-function pressButton(buttonId) {
+function OnButtonClick(buttonId) {
 	console.log(buttonId);
 	
 	// Fire appropriate event
 	switch (buttonId) {
 		case 'btn_move':
 			console.log('initiate move');
+			// TODO: Add an animation during move() ... sweetsauce
 			break;
 		case 'btn_binoc':
 			console.log('initiate binoc');
@@ -87,8 +93,7 @@ function pressButton(buttonId) {
 
 function drawMap() {
 	// for now, assume NxN grid
-	var c=document.getElementById("game_map");
-	var ctx=c.getContext("2d");
+	var ctx = gCanvas.getContext("2d");
 	for (var x = 0; x < MAP_X; x++) {
 		for (var y = 0; y < MAP_X; y++) {
 			_drawMapTile(ctx, x, y);
@@ -125,3 +130,73 @@ function _drawMapTile(ctx, x,y) {
 	ctx.strokeStyle = 'black';
 	ctx.stroke();	
 }
+
+// Returns player location as [x,y]
+function getPlayerLocation(playerId) {
+	for (var x = 0; x < MAP_X; x++) {
+		for (var y = 0; y < MAP_X; y++) {
+			if (g_map[x][y] === 'player' + playerId) {
+				return [x,y];
+			}
+		}
+	}
+	return [0,0];
+}
+
+// Tries to set player location
+// If valid location, returns true
+// If invalid location, returns false
+function setPlayerLocation(playerId, x, y) {
+	// Check if move is valid
+	var oldPlayerLocation = getPlayerLocation(playerId);
+	var newPlayerLocation = [x,y];
+	var valid = isAdjacent(oldPlayerLocation, newPlayerLocation);
+
+	// If so, update player Location
+	if (valid) {
+		return true;
+	}
+	return false;
+}
+
+// Handle mouse events
+function OnCanvasClick(e) {
+	var cell = getMapCoordsFromMouseClick(e);
+}
+
+// from: http://answers.oreilly.com/topic/1929-how-to-use-the-canvas-and-draw-elements-in-html5/
+// return [x,y]
+function getMapCoordsFromMouseClick(e) {
+    // Get coordinates relative to top-left of page
+    var x;
+    var y;
+    if (e.pageX || e.pageY) {
+      x = e.pageX;
+      y = e.pageY;
+    }
+    else {
+      x = e.clientX + document.body.scrollLeft +
+           document.documentElement.scrollLeft;
+      y = e.clientY + document.body.scrollTop +
+           document.documentElement.scrollTop;
+    }
+
+    // Once you have coordinates relative to top-left of page, then offset to recenter on top-left on canvas
+    x -= gCanvas.offsetLeft;
+	y -= gCanvas.offsetTop;
+
+	// var cell = new Cell(Math.floor(y/kPieceWidth), Math.floor(x/kPieceHeight));
+	var cell = [Math.floor(y/TILE_SIZE), Math.floor(x/TILE_SIZE)]
+	console.log(cell);
+    return cell;
+}
+
+// TODO: Create a class to Handle all of the UI (canvas, drawing, responding to User Input)
+
+// TODO: Create a class for position coordinates (.x, .y, .coord [x,y])
+//	also handle calculations like distance, adjacency, etc
+
+// TODO: Create a class for interacting with the map
+//	movePlayer (Point)
+//	isOccupied (Point)
+//	
