@@ -1,10 +1,16 @@
-$(document).ready(function(){
-	$("a").click(function(){
-		pressButton($(this).attr('id'));
-	});
-	drawMap();
-});
+// from: http://www.ccbrothers.com/gamecorner/tutorial.php?tutorial=10
+// [name] image file name
+function loadImage(name)
+{
+    // create new image object
+    var image = new Image();
+    // load image
+    image.src = name;
+    // return image object
+    return image;
+}
 
+/* Setup */
 // Global Map state
 var TILE_SIZE = 50;
 var MAP_X = 5;
@@ -17,6 +23,32 @@ var g_map =
 	[null, null, null, null, null],
 	[null, null, null, null, 'player2']
 ];
+
+
+
+
+/* Start game */
+$(document).ready(function(){
+	$("a").click(function(){
+		pressButton($(this).attr('id'));
+	});
+
+	// Sprites	
+	img_player = loadImage("images/player.png");
+	
+	// Must ensure images are loaded before drawing
+	img_player.onload = function() {
+	  drawMap();
+	}
+});
+ 
+// [imageObject] this is image object which is returned loadImage
+// [x] screen x coordinate
+// [y] screen y coordinate
+// function drawImage(imageObject, x, y)
+// {
+//     ctx.drawImage(imageObject, x, y);
+// }
 
 // Main Game Loop
 // Waiting for input should be async. Must allow response to mouse events
@@ -66,25 +98,30 @@ function drawMap() {
 
 function _drawMapTile(ctx, x,y) {
 	
-
+	var item = g_map[x][y];
+	//console.log("(" + x + "," + y + "): " + item);
 	ctx.beginPath();
 	ctx.rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
-	var item = g_map[x][y];
-	console.log("(" + x + "," + y + "): " + item);
-	
+
 	// choose color based on what's in the square
 	if (item == null) {
-		ctx.fillStyle="white";
+		ctx.fillStyle="#E0E0E0";	// Light Gray
+		ctx.fill();
 	} else if (item == "player1") {
 		ctx.fillStyle="yellow";
+		ctx.fill();
+		ctx.drawImage(img_player, x*TILE_SIZE, y*TILE_SIZE);
 	} else if (item == "player2") {
 		ctx.fillStyle="red";
+		ctx.fill();
+		// ctx.drawImage(img_player, x*TILE_SIZE, y*TILE_SIZE);
+		ctx.drawImage(img_player, x*TILE_SIZE, y*TILE_SIZE);
 	} else if (item == "fog") {
 		ctx.fillStyle="gray";
+		ctx.fill();
 	}
-
-	ctx.fill();
+	
 	ctx.lineWidth = 2;
-    ctx.strokeStyle = 'black';
-    ctx.stroke();
+	ctx.strokeStyle = 'black';
+	ctx.stroke();	
 }
