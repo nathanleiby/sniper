@@ -11,12 +11,26 @@ function loadImage(name)
 }
 
 /* Setup */
-// Global Map state
+// Global Setup vars
 var TILE_SIZE = 50;
 var DIM = 4;
 var MAP_X = DIM;	// TODO: Right now, requires that MAP_X == MAP_Y
 var MAP_Y = DIM;
-var g_map = []
+var NUMBER_OF_PLAYERS = 2;
+
+// Global state
+var g_map = []	// Game Map
+var g_player_turn = -1;	// this will cause it to start with player 0 
+var g_click_mode = null;
+var g_is_alive = [];
+
+// Player-specific state
+var g_players = {
+	'player0': {
+		has_seen: {},
+		last_saw: {'player1': [3,3]}
+	}
+}
 
 // Initalize Map and player locations
 function initMap() {
@@ -61,6 +75,7 @@ $(document).ready(function(){
 // Main Game Loop
 // Waiting for input should be async. Must allow response to mouse events
 function loop() {
+	g_player_turn = (g_player_turn+1) % NUMBER_OF_PLAYERS;
 
 	// execute action
 	// wait for responses to sub actions (e.g. shoot... where? legal move?)
@@ -88,6 +103,7 @@ function OnButtonClick(buttonId) {
 	switch (buttonId) {
 		case 'btn_move':
 			console.log('initiate move');
+			g_click_mode = 'move';
 			// TODO: Add an animation during move() ... sweetsauce
 			break;
 		case 'btn_binoc':
@@ -98,6 +114,7 @@ function OnButtonClick(buttonId) {
 			break;
 		case 'btn_shoot':
 			console.log('initiate shoot');
+			g_click_mode = 'shoot';
 			break;
 		default:
 			console.log('no event');
@@ -110,8 +127,7 @@ function drawMap() {
 	var ctx = gCanvas.getContext("2d");
 	
 	for (var x = 0; x < MAP_X; x++) {
-		for (var y = 0; y < MAP_X; y++) {	
-			
+		for (var y = 0; y < MAP_X; y++) {			
 			_drawMapTile(ctx, x, y);
 		}
 	}
@@ -122,12 +138,14 @@ function _drawMapTile(ctx, x,y) {
 	var item = g_map[x][y];
 	//console.log("(" + x + "," + y + "): " + item);
 	ctx.beginPath();
-
-	// CAREFUL! Flipped x's and y's so that arrays [rol][col] is flipped to match coordinate system
 	ctx.rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
 	// choose color based on what's in the square
-	if (item == null) {
+	// if (item == null) {
+	
+	var currentPlayerPosition = getPlayerLocation(g_player_turn);
+
+	if (item == null && isAdjacent([x,y], currentPlayerPosition)) {	// Fog of war
 		ctx.fillStyle="#E0E0E0";	// Light Gray
 		ctx.fill();
 	} else if (item == "player0") {
@@ -141,6 +159,9 @@ function _drawMapTile(ctx, x,y) {
 		ctx.drawImage(img_player, x*TILE_SIZE, y*TILE_SIZE);
 	} else if (item == "fog") {
 		ctx.fillStyle="gray";
+		ctx.fill();
+	} else {	// Fog of war
+		ctx.fillStyle="191919";	// Almost black
 		ctx.fill();
 	}
 	
@@ -185,6 +206,16 @@ function setPlayerLocation(playerId, x, y) {
 	return false;
 }
 
+// Player 1 shoots gun at targetted square. if occupied, might hit em
+function shoot(playerId, x, y) {
+	if (! isEmpty ([x,y])) {
+		console.log("Hit!");
+	} else {
+		console.log("Missed...");
+	}
+	return true;
+}
+
 // Takes two points ([x1,y1], [x2,y2])
 function isAdjacent(pos1, pos2) {
 	var x1 = pos1[0];
@@ -225,8 +256,27 @@ function OnCanvasClick(e) {
 	var cell = getMapCoordsFromMouseClick(e);
 	// If validate coordinate
 	if (cell) {
-		setPlayerLocation(0, cell[0], cell[1]);	
-		loop();
+		var didAction = false;
+
+		// Respond to various click possibilities: move, binoc, aim, shoot
+		if (g_click_mode == 'move') {
+			console.log('trying to move');
+			didAction = setPlayerLocation(g_player_turn, cell[0], cell[1]);
+		} else if (g_click_mode == 'shoot') {
+			console.log('trying to shoot');
+			didAction = shoot(g_player_turn, cell[0], cell[1]);
+		} else {
+			console.log('no click mode selected');
+		}
+
+		if (didAction)
+		{
+			// Next action / turn
+			g_click_mode = null;
+			loop();
+		} else {
+			console.log('failed to do action');
+		}
 	}
 }
 
