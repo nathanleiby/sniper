@@ -21,6 +21,7 @@ var NUMBER_OF_PLAYERS = 2;
 // Global state
 var g_map = []	// Game Map
 var g_player_turn = -1;	// this will cause it to start with player 0 
+var g_round = 0;
 var g_click_mode = null;
 var g_is_alive = [];
 
@@ -76,6 +77,12 @@ $(document).ready(function(){
 // Waiting for input should be async. Must allow response to mouse events
 function loop() {
 	g_player_turn = (g_player_turn+1) % NUMBER_OF_PLAYERS;
+	if (g_player_turn === 0) {
+		g_round += 1;
+	}
+
+	var game_status = "Round " + g_round + ": Player " + (g_player_turn+1) + "'s turn.";
+	$('#game_status').text(game_status);
 
 	// execute action
 	// wait for responses to sub actions (e.g. shoot... where? legal move?)
