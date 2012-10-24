@@ -13,19 +13,29 @@ function loadImage(name)
 /* Setup */
 // Global Map state
 var TILE_SIZE = 50;
-var MAP_X = 5;
-var MAP_Y = 5;
-var g_map = 
-[
-	['player0', null, null, null, null],
-	[null, null, null, null, null],
-	[null, null, null, null, null],
-	[null, null, null, null, null],
-	[null, null, null, null, 'player1']
-];
+var DIM = 4;
+var MAP_X = DIM;	// TODO: Right now, requires that MAP_X == MAP_Y
+var MAP_Y = DIM;
+var g_map = []
+
+// Initalize Map and player locations
+function initMap() {
+	var row = [];
+	for (var i = 0; i < MAP_X; i++) {
+		row.push(null);
+	}
+	for (var j = 0; j < MAP_Y; j++) {
+		// slice to prevent pointing to same obj
+		g_map.push(row.slice());
+	}
+
+	g_map[0][0] = 'player0';
+	g_map[MAP_X - 1][MAP_Y - 1] = 'player1';
+}
 
 /* Start game */
 $(document).ready(function(){
+	initMap();
 
 	// Event Listeners
 	// Listen for clicks on move, binoc, aim, and shoot buttons
@@ -35,6 +45,8 @@ $(document).ready(function(){
 
 	// Listen for mouse clicks on canvas
 	gCanvas = document.getElementById("game_map");
+	gCanvas.width = MAP_X * TILE_SIZE;
+	gCanvas.height = MAP_Y * TILE_SIZE;
 	gCanvas.addEventListener("click", OnCanvasClick, false);
 
 	// Sprites	
@@ -45,14 +57,6 @@ $(document).ready(function(){
 	  loop();
 	}
 });
- 
-// [imageObject] this is image object which is returned loadImage
-// [x] screen x coordinate
-// [y] screen y coordinate
-// function drawImage(imageObject, x, y)
-// {
-//     ctx.drawImage(imageObject, x, y);
-// }
 
 // Main Game Loop
 // Waiting for input should be async. Must allow response to mouse events
@@ -77,7 +81,7 @@ function loop() {
 }
 
 function OnButtonClick(buttonId) {
-	$('#game_map').trigger('custom', ['Custom', 'Event']);
+	// $('#game_map').trigger('custom', ['Custom', 'Event']);
 	console.log(buttonId);
 	
 	// Fire appropriate event
