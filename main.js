@@ -178,7 +178,7 @@ function _drawMapTile(ctx, x,y) {
 }
 
 // Returns player location as [x,y]
-function getPlayerLocation(playerId) {
+ function getPlayerLocation(playerId) {
 	for (var x = 0; x < MAP_X; x++) {
 		for (var y = 0; y < MAP_X; y++) {
 			if (g_map[x][y] === 'player' + playerId) {

@@ -10,3 +10,12 @@ Sprites from:
 	MGS 2: http://media.photobucket.com/image/mgs%20sprites/Jadowman/Sprites/MetalGearCustoms.png
 	
 	Just test driving using theses images... will remove immediately if you dont want me to use!
+
+
+Gameplay overview:
+
+
+
+
+Ideas:
+- Sprite should show the "last move" of a player. E.g. if player 1 does "move" + "binoc", then when player 2s turn, if he uses binoc and can see player 1, he'll see player1 sprite looking through binoc (since that was the last action). Similarly can see player1 aiming through binocs, and then decide to move out of the way... etc.
