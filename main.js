@@ -16,7 +16,8 @@ var TILE_SIZE = 64;
 var DIM = 4;
 var MAP_X = DIM;	// TODO: Right now, requires that MAP_X == MAP_Y
 var MAP_Y = DIM;
-var NUMBER_OF_PLAYERS = 2;
+// var NUMBER_OF_PLAYERS = 2;
+var NUMBER_OF_PLAYERS = 1;
 
 // Global state
 var g_map = []	// Game Map
@@ -161,8 +162,6 @@ function _drawMapTile(ctx, x,y) {
 		// ctx.drawImage(img_player, x*TILE_SIZE, y*TILE_SIZE);
 		// bmpAnimation.x = 32 + (64 * x);
 		// bmpAnimation.y = 30 + (64 * y);
-		bmpAnimationIdle.x = 32 + (64 * x);
-		bmpAnimationIdle.y = 30 + (64 * y);
 	} else if (item == "player1") {
 		ctx.fillStyle="red";
 		ctx.fill();
@@ -182,7 +181,7 @@ function _drawMapTile(ctx, x,y) {
 }
 
 // Returns player location as [x,y]
- function getPlayerLocation(playerId) {
+function getPlayerLocation(playerId) {
 	for (var x = 0; x < MAP_X; x++) {
 		for (var y = 0; y < MAP_X; y++) {
 			if (g_map[x][y] === 'player' + playerId) {
@@ -212,6 +211,11 @@ function setPlayerLocation(playerId, x, y) {
 		// Be careful! (x,y) inversion in arrays vs coords
 		g_map[oldPlayerLocation[0]][oldPlayerLocation[1]] = null;
 		g_map[newPlayerLocation[0]][newPlayerLocation[1]] = 'player' + playerId;
+
+		// bmpAnimationIdle.x = 32 + (64 * x);
+		// bmpAnimationIdle.y = 30 + (64 * y);
+		player0_target_x = 32 + (64 * x);
+		player0_target_y = 30 + (64 * y);
 		return true;
 	}
 	return false;
@@ -409,7 +413,7 @@ function startGame() {
 	bmpAnimationIdle.x = 32;
 	bmpAnimationIdle.y = 30;
 
-	// bmpAnimation.currentFrame = 0;
+	bmpAnimation.currentFrame = 0;
 	// stage.addChild(bmpAnimation);
 
 	bmpAnimationIdle.currentFrame = 0;
@@ -424,37 +428,81 @@ function startGame() {
 	console.log("HandleImageLoad - end");
 }
 
+var player0_moveState = 'idle';
+var player0_x = 32;
+var player0_target_x = 32;
+var player0_y = 30;
+var player0_target_y = 30;
+
 function tick() {
-	drawMap();
-    // Hit testing the screen width, otherwise our sprite would disappear
-    if (bmpAnimation.x >= screen_width - 24) {
-        // We've reached the right side of our screen
-        // We need to walk left now to go back to our initial position
-        bmpAnimation.direction = -90;
-        bmpAnimation.gotoAndPlay("walk");
-    }
+	drawMap();	// only works because "stage.autoClear = false"
 
-    if (bmpAnimation.x < 24) {
-        // We've reached the left side of our screen
-        // We need to walk right now
-        // bmpAnimation.direction = 90;
-        // bmpAnimation.gotoAndPlay("walk_h");
+	// Toggle between "walk" and "idle" animations
+	if (! (player0_x == player0_target_x && player0_y == player0_target_y) ){
+		// If current Location != Target Location
+		
+		// If not yet walking, set to walk mode
+		if (player0_moveState == "idle") {
+			// Change to "walk" animation
+			stage.removeChild(bmpAnimationIdle);
 
-        // Add idling
-        bmpAnimation.direction = 90;
-        bmpAnimation.gotoAndStop("walk");
-        stage.removeChild(bmpAnimation);
-        bmpAnimationIdle.gotoAndPlay("idle");
-        stage.addChild(bmpAnimationIdle);
-    }
+			// Walk right .. TODO: Change based on movement direction
+			stage.addChild(bmpAnimation);
+			// bmpAnimation.direction = 90;
+			if (player0_target_x >= player0_x) {
+        		bmpAnimation.gotoAndPlay("walk_h");	// Walk right
+        	}
+        	else {
+        		bmpAnimation.gotoAndPlay("walk"); // Walk left
+        	}
+			bmpAnimation.x = player0_x;
+			bmpAnimation.y = player0_y;
+			player0_moveState = "walk";
+		}
+		
+		console.log('walk...');
+	} else {
+		// If at the target location
+		// check if "walk"ing (did you just arrive?)
+		if (player0_moveState == "walk") {
+			// Change to "idle" animation
+			stage.removeChild(bmpAnimation);
 
+			stage.addChild(bmpAnimationIdle);
+			// bmpAnimationIdle.direction = 90;
+        	bmpAnimationIdle.gotoAndPlay("idle");			
+			bmpAnimationIdle.x = player0_x;
+			bmpAnimationIdle.y = player0_y;
+			player0_moveState = "idle";	
+		}
+
+		console.log('idle...');
+	}
+		
     // Moving the sprite based on the direction & the speed
-    if (bmpAnimation.direction == 90) {
-        bmpAnimation.x += bmpAnimation.vX;
+    if (player0_moveState == "walk") {
+    	// Animate
+		// if (bmpAnimation.direction == 90) {
+
+		// +/- x
+		if (player0_target_x > player0_x) {
+	        bmpAnimation.x += bmpAnimation.vX;
+	   	} else if (player0_target_x < player0_x) {
+	        bmpAnimation.x -= bmpAnimation.vX;
+	    }	
+
+	    // +/- y
+		if (player0_target_y > player0_y) {
+	        bmpAnimation.y += bmpAnimation.vX;
+	    } else if (player0_target_y < player0_y) {
+	        bmpAnimation.y -= bmpAnimation.vX;
+	    }
+
+	    // Update Coords
+	    player0_x = bmpAnimation.x;
+		player0_y = bmpAnimation.y;	
     }
-    else {
-        bmpAnimation.x -= bmpAnimation.vX;
-    }
+    
 
     // update the stage:
     stage.update();
