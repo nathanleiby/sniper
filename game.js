@@ -26,7 +26,10 @@ var stateMachine = {
     currentPlayer: 0,
     numPlayers: 0,
     playersAlive: [], // bool T/F for each player
+    playerLocations: [],
+    map: [],
     winningPlayer: 0,
+    turns: 0,
 };
 
 var states = [
@@ -37,13 +40,21 @@ var states = [
 
 stateMachine.state = "gameStart";
 
-function getUserAction() {
-    console.log("Valid actions:");
-    console.log("- [m]ove");
-    // console.log("- [a]im");
-    // console.log("- [s]hoot");
+const AUTOMATED = true;
 
-    var c = query("Move?");
+function getUserAction() {
+    var c;
+    if (AUTOMATED) {
+        c = Math.random() >= 0.5
+    } else {
+        console.log("Valid actions:");
+        console.log("- [m]ove");
+        // console.log("- [a]im");
+        // console.log("- [s]hoot");
+
+        c = query("Move?");
+    }
+
     if (c == true) {
         return 'move';
     } else {
@@ -64,6 +75,7 @@ function getUserAction() {
 
 function nextPlayerTurn() {
     stateMachine.currentPlayer = (stateMachine.currentPlayer + 1) % stateMachine.numPlayers;
+    stateMachine.turns++;
 }
 
 function gameLoop() {
@@ -83,12 +95,40 @@ function gameLoop() {
     }
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random#Getting_a_random_integer_between_two_values
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
 function stateGameStart() {
     console.log("STATE: gameStart");
-    stateMachine.currentPlayer = 0;
+
     numPlayers = 3;
     stateMachine.numPlayers = numPlayers;
     stateMachine.playersAlive = Array(numPlayers).fill(true);
+
+    stateMachine.currentPlayer = 0;
+
+    stateMachine.map = [
+        [-1, -1, -1, -1],
+        [-1, -1, -1, -1],
+        [-1, -1, -1, -1],
+        [-1, -1, -1, -1],
+    ];
+    for (var i=0; i < stateMachine.playersAlive.length; i ++) {
+        while (true) {
+            // assumes rectangular map
+            var row = getRandomInt(0, stateMachine.map.length);
+            var col = getRandomInt(0, stateMachine.map[0].length);
+            if (stateMachine.map[row][col] == -1) {
+                stateMachine.map[row][col] = i;
+                console.log("Player " + i + " start position: row=" + row + ",col=" + col);
+                break;
+            }
+        }
+    };
 }
 
 
@@ -114,21 +154,42 @@ function gameOver() {
 
 // kills the next player
 function shoot() {
-    var nextPlayer = (stateMachine.currentPlayer + 1) % stateMachine.numPlayers
 
-    // TODO:: random hit/miss
-    console.log("hit player " + nextPlayer + "!");
-    stateMachine.playersAlive[nextPlayer] = false;
+    // choose a random square that's not the player's current square
+    var row;
+    var col;
+    var targetPlayer;
+    while (true) {
+        // assumes rectangular map
+        row = getRandomInt(0, stateMachine.map.length);
+        col = getRandomInt(0, stateMachine.map[0].length);
+        targetPlayer = stateMachine.map[row][col]
+        if (targetPlayer != stateMachine.currentPlayer) {
+            console.log("Player " + stateMachine.currentPlayer + " shoots @ row=" + row + ",col=" + col);
+            break;
+        }
+    }
+
+    if (targetPlayer == -1) {
+        console.log("missed!");
+    } else {
+        console.log("hit player " + targetPlayer + "!");
+        stateMachine.playersAlive[targetPlayer] = false;
+    }
+
+    return;
 }
 
 function stateGameInProgress() {
     console.log("STATE: gameInProgress");
     while (true) {
         console.log("");
+        console.log("Turn #" + stateMachine.turns);
         if (gameOver()) {
             break;
         }
-        // only do the turn if player is alive
+
+        // only do player's turn if player is alive
         if (stateMachine.playersAlive[stateMachine.currentPlayer]) {
             console.log("Current Player: ", stateMachine.currentPlayer);
             var userAction = getUserAction();
