@@ -154,7 +154,6 @@ function gameOver() {
 
 // kills the next player
 function shoot() {
-
     // choose a random square that's not the player's current square
     var row;
     var col;
@@ -180,6 +179,58 @@ function shoot() {
     return;
 }
 
+// returns [row, col] where player n is located
+function getPlayerLocation(player) {
+    var m = stateMachine.map;
+    for (var row=0; row < m.length; row++) {
+        for (var col=0; col < m[0].length; col++) {
+            if (m[row][col] == player) {
+                return [row, col];
+            }
+        }
+    }
+    throw("cannot getPlayerLocation for player " + player);
+}
+
+function move() {
+    // choose a random adjacent square (or diagonally adjacent square) that doesn't contain a player
+    var row;
+    var col;
+    while (true) {
+        // assumes rectangular map
+        row = getRandomInt(0, stateMachine.map.length);
+        col = getRandomInt(0, stateMachine.map[0].length);
+        var isEmpty = (stateMachine.map[row][col] == -1);
+        var loc = getPlayerLocation(stateMachine.currentPlayer);
+        var isAdjacent = Math.abs(row - loc[0]) <= 1 && Math.abs(col - loc[1]) <= 1 && !(row == loc[0] && col == loc[1]);
+        if (isAdjacent && isEmpty) {
+            console.log("Player " + stateMachine.currentPlayer + " moves to @ row=" + row + ",col=" + col);
+            stateMachine.map[row][col] = stateMachine.currentPlayer;
+            stateMachine.map[loc[0]][loc[1]] = -1;
+            break;
+        }
+    }
+
+
+}
+
+function drawMap() {
+    var m = stateMachine.map;
+    output = ""
+    for (var row=0; row < m.length; row++) {
+        for (var col=0; col < m[0].length; col++) {
+            if (m[row][col] == -1) {
+                output += "-"
+            } else {
+                // player number
+                output += m[row][col];
+            }
+        }
+        output += "\n"
+    }
+    console.log(output);
+}
+
 function stateGameInProgress() {
     console.log("STATE: gameInProgress");
     while (true) {
@@ -192,15 +243,21 @@ function stateGameInProgress() {
         // only do player's turn if player is alive
         if (stateMachine.playersAlive[stateMachine.currentPlayer]) {
             console.log("Current Player: ", stateMachine.currentPlayer);
+
+            drawMap();
+
             var userAction = getUserAction();
             if (userAction == 'move') {
                 console.log("you moved!");
+                move();
             } else if (userAction == 'shoot') {
                 console.log("you shot!");
                 shoot();
             } else {
                 throw("Unknown user action");
             }
+        } else {
+            console.log("player " + stateMachine.currentPlayer + " is dead.")
         }
 
         nextPlayerTurn();
